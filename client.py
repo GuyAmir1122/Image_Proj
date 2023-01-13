@@ -1,6 +1,6 @@
-from email.mime import image
 import socket, pickle
 from PIL import Image
+import tcp_by_size
 
 #
 
@@ -25,20 +25,28 @@ def create_pixel_arr():
 def send_wanted_pixels(start_X, end_X, start_Y, end_Y):
     to_send = []
     for y in range(start_Y, end_Y):
-        to_send.append([x for x in y[start_X, end_X]])
-    sock.send(pickle.dumps(to_send))
+        to_send.append([x for x in PIXELS[y][start_X, end_X]])
+    tcp_by_size.send_with_size(sock, pickle.dumps(to_send))
 
 
-
+def recv_wanted_pixels():
+    data = tcp_by_size.recv_with_size(sock)
+    coardinates = pickle.loads(data)
+    return coardinates
 
 
 
 def main():
     create_pixel_arr()
     sock.connect((IP,PORT))
-    while not CONNECTED:
-        sock.send("CONNECT###")
+    """    while not CONNECTED:
+        tcp_by_size.send_with_size("CONNECT")
+        data = tcp_by_size.recv_by_size(sock)
+        if data == "CONNECTED":
+            CONNECTED = True"""
     while not FINISH:
+        coardinates = recv_wanted_pixels()
+        send_wanted_pixels(coardinates[0], coardinates[1], coardinates[2], coardinates[3])
 
 
 

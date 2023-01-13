@@ -1,6 +1,7 @@
 import socket
 import threading
-
+import tcp_by_size
+import pygame
 IP = "0.0.0.0"
 PORT = 6969
 CLIENTS = 0
@@ -9,12 +10,29 @@ FLASHLIGHT = 50
 CLIENT_DICT = {1:None,2:None,3:None,4:None}
 PHOTOSIZE = 400
 MIDDLE = PHOTOSIZE//2
+max_x = 1000
+max_y = 1000
+location_x = 0
+location_y = 0
+pygame.init()
+scrn = pygame.display.set_mode((PHOTOSIZE, PHOTOSIZE))
+
+class Client:
+    def __init__(self, sock, quarter):
+        self.sock = sock
+        self.quarter = quarter
+
+
+
+
 
 def get_av():
     for key in CLIENT_DICT:
         if CLIENT_DICT[key] != None:
             return key
     return -1
+
+
 
 def check_quarter(x,y,quarter):
     if quarter == 1:
@@ -76,12 +94,49 @@ def get_pixels(x,y):
     for i in range(1,5):
         if check_quarter(x,y,i):
             diction[i] = get_pixels_by_quarter(x,y,i)
+        else:
+            diction[i] = None
     return diction
 
 
 def handle_client(cli_sock,quarter):
+    client = Client(cli_sock, quarter)
+    CLIENT_DICT[quarter] = client
+
+
+def draw_part(array,x,y):
+    s_x = x
+    s_y = y
+    for row in array:
+        s_x = x
+        for column in row:
+            pygame.draw.rect(scrn,column, pygame.Rect(s_x, s_y, 1, 1))
+            s_x+=1
+        s_y+=1
+        
+def draw_img():
     pass
 
+def graphics():
+    while not FINISH:
+        pixels_dict = get_pixels(location_x, location_y)
+        for key in pixels_dict:
+            if pixels_dict[key] is not None:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    if location_x > 0:
+                        location_x -= 1
+                if event.key == pygame.K_RIGHT:
+                    if location_x < max_x:
+                        location_x += 1
+                if event.key == pygame.K_UP:
+                    if location_y > 0:
+                        location_y -= 1
+                if event.key == pygame.K_DOWN:
+                    if location_y < max_y:
+                        location_y += 1
 
 
 def main():
@@ -97,6 +152,8 @@ def main():
         cli_sock,addr = srv_sock.accept()
         t = threading.Thread(target=handle_client,args=(cli_sock,quarter))
         t.start()
+
+
 
 
 if __name__ == "__main__":
